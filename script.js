@@ -1,71 +1,139 @@
+fetch('https://random-word.ryanrk.com/api/en/word/random/?length=5')
+.then(result=> result.json())
+.then(diccionario => {
+    console.log(diccionario)
+    let wordSec = diccionario[0];
+    //La cantidad de intentos esta definida más adelante
+    let intentos= 1;
 
-let oportunidad = 6;
-let diccionario = ['ABETO', ' ACTOR', 'AGUAS', 'AGUDO', 'ALADO', 'ALTAR', 'AVIÓN', 'AZUL','BALAS','BEBÉS','BICHO','BIZCO','BUENO','BUSCA','CAJAS', 'CALMA', 'CAMPO', 'CANAS', 'CARRO', 'CASAS', 'CAÍDA','CEJAS', 'CERCA', 'CERDO', 'CIEGO', 'CLAVO', 'COSAS', 'CURAR'];
-const palabra = diccionario[Math.floor(Math.random() * diccionario.length)];
-    window.addEventListener('load', init)
-    const GRID = document.getElementById("grid");
-    function init() {
-        console.log('Esto se ejecuta solo cuando se carga la pagina web')
+    let mainContainer= document.querySelector(".main-container")
+    let resultadoCorrecto = document.querySelector(".result")
+
+    let wordArray= wordSec.toUpperCase().split("");
+
+    let actualRow= document.querySelector(".row")
+    drawSquares(actualRow);
+    listenInput(actualRow);
+    addfocusElement(actualRow);
+
+
+    function listenInput(actualRow){
+        let squares= actualRow.querySelectorAll(".square")
+            squares= [...squares]
+
+        let userInput= []
+            squares.forEach(element=>{
+            element.addEventListener("input", event=>{
+        if (event.inputType !== `deleteContentBackward`){
+            //recoge el ingreso del usuario 
+            userInput.push(event.target.value.toUpperCase())
+
+            if(event.target.nextElementSibling){
+                event.target.nextElementSibling.focus();
+
+            }else{
+                //Arma un arreglo con el resultado antes de comparar
+                let squarefilled= document.querySelectorAll(".square")
+                    squarefilled= [...squarefilled]
+                let ultcinco= squarefilled.slice(-5);
+                let finalUserInput= [];
+                    ultcinco.forEach(element=>{
+                        finalUserInput.push(element.value.toUpperCase())
+                    });
+
+                //Cambia los estilos comparando los arreglos (verde) 
+                let sameElements= CompararII(wordArray, finalUserInput)
+                    sameElements.forEach(element=>{
+                        squares[element].classList.add("verde");       
+                    })
+                // Si son iguales 
+                if(sameElements.length == wordArray.length){
+                    showResult("Ganaste!!")
+                        return;
+                }
+                //Cambia los estilos comparando los arreglos (amarillo )
+                let existeIndex = existeletra(wordArray, finalUserInput)
+                    existeIndex.forEach(element=>{
+                        squares[element].classList.add("amarillo");       
+                    });
+                //crea una nueva fila
+                let actualRow= crearfilas()
+                if(!actualRow){
+                    return
+                }
+                    drawSquares(actualRow)
+                    listenInput(actualRow)
+                    addfocusElement(actualRow);
+                } 
+            }else{
+                userInput.pop()
+                    }
+            });
+        })
     }
-    const button = document.getElementById("guess-button");
-    button.addEventListener("click", intentar);
-    function intentar(){
-        console.log("Intento!")
+
+
+    //FUNCIONES
+    function CompararII(array1, array2){
+        //Compara las posiciones
+        let igualesIndex = []
+        array1.forEach((element, index)=>{
+            if(element== array2[index]){
+                igualesIndex.push(index);
+                console.log(`en la posicion ${index} SI son iguales`)
+            }else{
+                console.log(`en la posicion ${index} NO son iguales`)
+            }
+        });
+        return igualesIndex
     }
-
-    function intentar(){
-        const INTENTO = leerIntento();
-        console.log(INTENTO)
-        const ROW = document.createElement('div');
-        ROW.className = 'row';
-
-    for (let i in palabra){
-        const SPAN = document.createElement('span');
-        SPAN.className = 'letter';
-
-        if (INTENTO === palabra ) {
-            SPAN.innerHTML = INTENTO;
-            SPAN.style.backgroundColor = '#0CCE6B';
-            console.log("GANASTE!")
-            terminar("<h1> GANASTE! :D</h1>")
+    function existeletra(array1, array2){
+        //Analiza si la letra existe en la palabra
+        let existearray= []
+        array2.forEach((element, index)=>{
+            if(element!==array1[index]&& array1.includes(element)){
+                existearray.push(index)
+            }
+        });
+        return existearray
+    }
+    function crearfilas(){
+        //Condiciona la cantidad de filas que hay que crear
+        intentos++ 
+        if(intentos<=6){
+            let nuevafila= document.createElement("div");
+                nuevafila.classList.add("row");
+                nuevafila.setAttribute("id","intentos")
+                mainContainer.appendChild(nuevafila)
+                return nuevafila;
+        }else{
+            showResult(`Intentalo de nuevo, la palabra era ${wordSec.toUpperCase()} `)
         }
         
-        if (INTENTO[i]===palabra[i]){
-            SPAN.innerHTML = INTENTO[i];
-            SPAN.style.backgroundColor = '#0CCE6B';
-            console.log(INTENTO[i], "VERDE")
-
-        } else if( palabra.includes(INTENTO[i]) ) {
-            SPAN.innerHTML = INTENTO[i];
-            SPAN.style.backgroundColor = '#FFBD00';
-            console.log(INTENTO[i], "AMARILLO")
-
-        } else {
-            SPAN.innerHTML = INTENTO[i];
-            SPAN.style.backgroundColor = '#6F8695';
-            console.log(INTENTO[i], "GRIS")
-        }
-        ROW.appendChild(SPAN);
     }
-    GRID.appendChild(ROW);
-        oportunidad--;
-
-    if (oportunidad==0){
-        terminar("<h1>PERDISTE :(</h1>")
-        console.log("PERDISTE")
+    function drawSquares(actualRow){
+        // Crea las filas
+        wordArray.forEach((item, index) =>{
+            if(index===0){
+                actualRow.innerHTML += `<input type="text" maxlength="1" class="square focus">`
+            }else{
+                actualRow.innerHTML += `<input type="text" maxlength="1" class="square">`
+            }
+            
+        });
     }
+    function addfocusElement(actualRow){
+        //Marca para escribir en el primer cuadro 
+        let focusElement= actualRow.querySelector(".focus")
+            focusElement.focus();
     }
-    function terminar(mensaje){
-        const INPUT = document.getElementById("guess-input");
-        INPUT.disabled = true;
-        button.disabled = true;
-        let contenedor = document.getElementById('guesses');
-        contenedor.innerHTML = mensaje;
-    }
-    function leerIntento(){
-        let intento = document.getElementById("guess-input");
-        intento = intento.value;
-        intento = intento.toUpperCase(); 
-        return intento;
-    }
-    
+    function showResult(textMsg){
+        // Muestra un mensaje cuando se cumplen ciertas condiciones
+        resultadoCorrecto.innerHTML = `
+        <p>${textMsg}</p>
+        <button class="button">Reiniciar</button>`
+        let resetBut= document.querySelector(".button")
+            resetBut.addEventListener("click", ()=>{
+            location.reload(); });
+    } 
+})
